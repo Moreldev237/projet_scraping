@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scraper Opportunités Cameroun</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div>
+                    <h1>🎯 Opportunités Cameroun</h1>
+                    <p class="subtitle">Emplois & Bourses pour les Camerounais</p>
+                    <div id="apiMessage" style="margin-top: 12px; color: #cbd5e1; font-weight: 500;"></div>
+                </div>
+                <div class="header-actions">
+                    <button onclick="scrapeAll()" class="btn-primary">
+                        🔄 Scraper toutes les sources
+                    </button>
+                </div>
+            </div>
+        </header>
+
+
+        <!-- Statistiques -->
+        <div class="stats-container" id="stats">
+            <div class="stat-card">
+                <span class="stat-number" id="totalCount">0</span>
+                <span class="stat-label">Total</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" id="emploiCount">0</span>
+                <span class="stat-label">Offres d'emploi</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" id="bourseUnivCount">0</span>
+                <span class="stat-label">Bourses universitaires</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" id="bourseScolaireCount">0</span>
+                <span class="stat-label">Bourses scolaires</span>
+            </div>
+        </div>
+
+        <!-- Filtres -->
+        <div class="filters">
+            <input type="text" id="searchInput" placeholder="🔍 Rechercher..." onkeyup="applyFilters()">
+            <select id="typeFilter" onchange="applyFilters()">
+                <option value="">Tous les types</option>
+                <option value="emploi">Emploi</option>
+                <option value="bourse_universitaire">Bourse Universitaire</option>
+                <option value="bourse_scolaire">Bourse Scolaire</option>
+                <option value="stage">Stage</option>
+                <option value="concours">Concours</option>
+            </select>
+            <select id="statutFilter" onchange="applyFilters()">
+                <option value="">Tous les statuts</option>
+                <option value="actif">Actif</option>
+                <option value="expire">Expiré</option>
+            </select>
+            <button onclick="applyFilters()" class="btn-secondary">Appliquer</button>
+            <button onclick="resetFilters()" class="btn-secondary">Réinitialiser</button>
+        </div>
+
+        <!-- Liste des opportunités -->
+        <div class="opportunites-container" id="opportunitesList">
+            <div class="loading">Chargement des opportunités...</div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination" id="pagination">
+            <button onclick="previousPage()" id="prevBtn">◀ Précédent</button>
+            <span id="pageInfo">Page 1</span>
+            <button onclick="nextPage()" id="nextBtn">Suivant ▶</button>
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>

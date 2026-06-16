@@ -1,0 +1,3 @@
+# ignorons les fichiers sensibles
+.env
+venv/
