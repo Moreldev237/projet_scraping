@@ -1,11 +1,12 @@
 import scrapy
-from scrapy.crawler import CrawlerProcess
-from scrapy.utils.project import get_project_settings
 from scrapers.items import OpportuniteLoader
 from app import crud, models, schemas
 from app.database import SessionLocal
 from datetime import datetime
 import re
+import subprocess
+import sys
+import os
 
 class EmploiCamerounSpider(scrapy.Spider):
     name = "emploi_cameroun"
@@ -53,16 +54,42 @@ class EmploiCamerounSpider(scrapy.Spider):
                 
                 yield loader.load_item()
         
+        # Bloc générique pour les autres sites (à affiner site par site)
+        else:
+            # Tentative d'extraction générique pour voir si quelque chose remonte
+            for article in response.css('article, div.job, div.post'):
+                loader = OpportuniteLoader(selector=article)
+                loader.add_css('titre', 'h1::text, h2::text, h3::text')
+                loader.add_value('type', 'emploi')
+                loader.add_value('source', response.url)
+                loader.add_value('source_url', response.url)
+                titre = article.css('h1::text, h2::text, h3::text').get()
+                if titre:
+                    loader.add_value('hash_unique', crud.generate_hash(titre, response.url))
+                    yield loader.load_item()
+
         # Gérer la pagination
         next_page = response.css('a.next::attr(href)').get()
         if next_page:
             yield scrapy.Request(url=response.urljoin(next_page), callback=self.parse)
 
-def run_emploi_spider(db_session):
+def run_emploi_spider():
     """Fonction pour exécuter le spider depuis l'API"""
     try:
-        process = CrawlerProcess(get_project_settings())
-        process.crawl(EmploiCamerounSpider)
-        process.start()
+        # Calcul du chemin absolu vers la racine du projet Scrapy (backend/)
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        
+        # Préparer les variables d'environnement pour le sous-processus
+        env = os.environ.copy()
+        # Indiquer explicitement à Scrapy où trouver ses paramètres
+        env['SCRAPY_SETTINGS_MODULE'] = 'scrapers.settings'
+        
+        subprocess.Popen(
+            [sys.executable, "-m", "scrapy", "crawl", "emploi_cameroun"],
+            cwd=project_root,
+            env=env, # Passer l'environnement modifié
+            stdout=sys.stdout, # Afficher la sortie standard de Scrapy
+            stderr=sys.stderr  # Afficher les erreurs de Scrapy
+        )
     except Exception as e:
         print(f"Erreur lors du scraping: {e}")

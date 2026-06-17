@@ -1,7 +1,9 @@
 import scrapy
-from scrapy.crawler import CrawlerProcess
 from scrapers.items import OpportuniteLoader
 from app import crud
+import subprocess
+import sys
+import os
 import re
 
 class BoursesCamerounSpider(scrapy.Spider):
@@ -91,11 +93,23 @@ class BoursesCamerounSpider(scrapy.Spider):
         if next_page:
             yield scrapy.Request(url=response.urljoin(next_page), callback=self.parse)
 
-def run_bourses_spider(db_session):
+def run_bourses_spider():
     """Fonction pour exécuter le spider depuis l'API"""
     try:
-        process = CrawlerProcess(get_project_settings())
-        process.crawl(BoursesCamerounSpider)
-        process.start()
+        # Calcul du chemin absolu vers la racine du projet Scrapy (backend/)
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        
+        # Préparer les variables d'environnement pour le sous-processus
+        env = os.environ.copy()
+        # Indiquer explicitement à Scrapy où trouver ses paramètres
+        env['SCRAPY_SETTINGS_MODULE'] = 'scrapers.settings'
+        
+        subprocess.Popen(
+            [sys.executable, "-m", "scrapy", "crawl", "bourses_cameroun"],
+            cwd=project_root, # S'assure que Scrapy trouve le fichier scrapy.cfg
+            env=env, # Passer l'environnement modifié
+            stdout=sys.stdout, # Afficher la sortie standard de Scrapy
+            stderr=sys.stderr  # Afficher les erreurs de Scrapy
+        )
     except Exception as e:
         print(f"Erreur lors du scraping: {e}")

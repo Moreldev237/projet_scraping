@@ -8,6 +8,9 @@ class OpportunitePipeline:
     def __init__(self):
         self.db = SessionLocal()
         
+    def close_spider(self, spider):
+        self.db.close()
+
     def process_item(self, item, spider):
         # Convertir l'item en dictionnaire
         item_dict = dict(item)
@@ -47,11 +50,26 @@ class OpportunitePipeline:
     
     def parse_date(self, date_str):
         """Tente de parser différentes formats de date"""
-        patterns = [
-            r'(\d{1,2})/(\d{1,2})/(\d{4})',
-            r'(\d{4})-(\d{2})-(\d{2})',
-            r'(\d{1,2}) (\w+) (\d{4})',
-            r'(\d{1,2}) (janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre) (\d{4})',
-        ]
-        # Implémentation simplifiée
+        if not date_str:
+            return None
+
+        date_str = date_str.lower().strip()
+        
+        # Conversion des mois en français vers numérique
+        mois = {
+            'janvier': '01', 'février': '02', 'mars': '03', 'avril': '04',
+            'mai': '05', 'juin': '06', 'juillet': '07', 'août': '08',
+            'septembre': '09', 'octobre': '10', 'novembre': '11', 'décembre': '12'
+        }
+        
+        for nom, num in mois.items():
+            date_str = date_str.replace(nom, num)
+
+        # Nettoyage des caractères non numériques restant pour les formats standards
+        for fmt in ("%d %m %Y", "%d/%m/%Y", "%Y-%m-%d"):
+            try:
+                return datetime.strptime(date_str, fmt)
+            except ValueError:
+                continue
+
         return None

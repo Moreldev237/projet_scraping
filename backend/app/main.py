@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, HTMLResponse # Import FileResponse and HTMLResponse
 from sqlalchemy.orm import Session
 from typing import List
 import os
@@ -28,8 +29,14 @@ app.add_middleware(
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Routes API
-@app.get("/")
-async def root():
+@app.get("/", response_class=HTMLResponse)
+async def read_root():
+    """Sert le fichier index.html du frontend"""
+    return FileResponse("static/index.html")
+
+@app.get("/api/info")
+async def get_api_info():
+    """Retourne le message de bienvenue de l'API"""
     return {"message": "Bienvenue sur l'API Scraper Opportunités Cameroun"}
 
 @app.get("/api/opportunites", response_model=List[schemas.OpportuniteResponse])
@@ -40,13 +47,15 @@ async def get_opportunites(
     type: str = None,
     pays: str = None,
     organisation: str = None,
+    statut: str = None,
     db: Session = Depends(get_db)
 ):
     search_params = schemas.OpportuniteSearch(
         query=query,
         type=type,
         pays=pays,
-        organisation=organisation
+        organisation=organisation,
+        statut=statut
     )
     return crud.get_opportunites(db, skip=skip, limit=limit, search_params=search_params)
 
@@ -58,22 +67,22 @@ async def get_opportunite(opportunite_id: int, db: Session = Depends(get_db)):
     return opportunite
 
 @app.post("/api/scrape/emploi")
-async def scrape_emploi(background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+async def scrape_emploi(background_tasks: BackgroundTasks):
     """Déclenche le scraping des offres d'emploi"""
-    background_tasks.add_task(run_emploi_spider, db)
+    background_tasks.add_task(run_emploi_spider)
     return {"message": "Scraping des offres d'emploi démarré en arrière-plan"}
 
 @app.post("/api/scrape/bourses")
-async def scrape_bourses(background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+async def scrape_bourses(background_tasks: BackgroundTasks):
     """Déclenche le scraping des bourses scolaires et universitaires"""
-    background_tasks.add_task(run_bourses_spider, db)
+    background_tasks.add_task(run_bourses_spider)
     return {"message": "Scraping des bourses démarré en arrière-plan"}
 
 @app.post("/api/scrape/all")
-async def scrape_all(background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+async def scrape_all(background_tasks: BackgroundTasks):
     """Déclenche le scraping de toutes les sources"""
-    background_tasks.add_task(run_emploi_spider, db)
-    background_tasks.add_task(run_bourses_spider, db)
+    background_tasks.add_task(run_emploi_spider)
+    background_tasks.add_task(run_bourses_spider)
     return {"message": "Scraping de toutes les sources démarré en arrière-plan"}
 
 @app.get("/api/stats")

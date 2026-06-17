@@ -6,7 +6,7 @@ let totalItems = 0;
 document.addEventListener('DOMContentLoaded', async () => {
     // Afficher le message de l'API sur l'UI
     try {
-        const res = await fetch('/');
+        const res = await fetch('/api/info');
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         const el = document.getElementById('apiMessage');
